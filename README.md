@@ -51,8 +51,3 @@ http://localhost:3000
 ---
 
 
-
-
-## 👩‍💻 Geliştirici
-
-Bu proje bir bitirme projesi kapsamında geliştirilmektedir.
