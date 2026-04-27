@@ -1,42 +1,57 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
-  const [image, setImage] = useState<any>(null);
-  const [preview, setPreview] = useState<any>(null);
-  const [result, setResult] = useState<any>(null);
+  const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
 
-  const handleImage = (e: any) => {
-    const file = e.target.files[0];
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+      if (result) URL.revokeObjectURL(result);
+    };
+  }, [preview, result]);
+
+  const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     setImage(file);
     setPreview(URL.createObjectURL(file));
+    setResult(null);
   };
 
   const sendToBackend = async () => {
     if (!image) return;
-    // test
 
-    const formData = new FormData();
-    formData.append("file", image);
-    formData.append("prompt", prompt); // 🔥 yeni eklendi
+    try {
+      const formData = new FormData();
+      formData.append("file", image);
+      formData.append("prompt", prompt);
 
-    const res = await fetch("http://127.0.0.1:8000/segment", {
-      method: "POST",
-      body: formData,
-    });
+      const res = await fetch("http://127.0.0.1:8000/segment", {
+        method: "POST",
+        body: formData,
+      });
 
-    const data = await res.json();
+      if (!res.ok) throw new Error("Backend hata verdi");
 
-    // HEX → IMAGE
-    const byteArray = new Uint8Array(
-      data.image.match(/.{1,2}/g).map((b: any) => parseInt(b, 16))
-    );
+      const data = await res.json();
 
-    const blob = new Blob([byteArray], { type: "image/png" });
-    const url = URL.createObjectURL(blob);
+      const byteArray = new Uint8Array(
+        data.image.match(/.{1,2}/g).map((b: string) => parseInt(b, 16))
+      );
 
-    setResult(url);
+      const blob = new Blob([byteArray], { type: "image/png" });
+      const url = URL.createObjectURL(blob);
+
+      setResult(url);
+    } catch (err) {
+      console.error(err);
+      alert("Bir hata oluştu 😢");
+    }
   };
 
   return (
@@ -44,7 +59,6 @@ export default function Home() {
       <div style={styles.card}>
         <h1 style={styles.title}>🧠 AI Segmentasyon Sistemi</h1>
 
-        {/* 🔥 PROMPT INPUT */}
         <input
           type="text"
           placeholder="Nesne gir (örn: banana)"
@@ -53,10 +67,8 @@ export default function Home() {
           style={styles.input}
         />
 
-        {/* FILE INPUT */}
         <input type="file" onChange={handleImage} style={styles.file} />
 
-        {/* PREVIEW */}
         {preview && (
           <div>
             <h3>Yüklenen Görüntü</h3>
@@ -64,12 +76,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* BUTTON */}
         <button onClick={sendToBackend} style={styles.button}>
           Segment Et
         </button>
 
-        {/* RESULT */}
         {result && (
           <div>
             <h3>Sonuç</h3>
@@ -81,8 +91,8 @@ export default function Home() {
   );
 }
 
-// 🎨 STYLE (modern UI)
-const styles: any = {
+/* 🔥 BURASI DIŞARIDA OLACAK */
+const styles = {
   container: {
     height: "100vh",
     display: "flex",
@@ -94,7 +104,7 @@ const styles: any = {
     background: "#1e293b",
     padding: "30px",
     borderRadius: "16px",
-    textAlign: "center",
+    textAlign: "center" as const,
     width: "400px",
     color: "white",
     boxShadow: "0 0 20px rgba(0,0,0,0.5)",
