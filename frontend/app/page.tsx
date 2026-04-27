@@ -53,7 +53,7 @@ export default function Home() {
       alert("Bir hata oluştu 😢");
     }
   };
-
+  //test
   return (
     <div style={styles.container}>
       <div style={styles.card}>
