@@ -2,35 +2,57 @@
 
 Bu proje, kullanıcıların yüklediği görseller üzerinde **image segmentation (görüntü segmentasyonu)** işlemi yapabilen bir web uygulamasıdır.
 
+---
+
 ##  Proje Amacı
 
-Bu projenin amacı, yapay zeka kullanarak bir görüntüdeki nesneleri ayırmak (segment etmek) ve kullanıcıya görsel olarak sunmaktır.
+Bu projenin amacı, bir görüntü içerisindeki nesneleri ayırmak (segment etmek) ve sonucu kullanıcıya görsel olarak sunmaktır.  
+Uygulama, farklı segmentasyon yöntemlerini destekleyecek şekilde geliştirilmektedir.
+
+---
 
 ##  Kullanılan Teknolojiler
 
-### Backend
+###  Backend
 - Python
 - FastAPI
 - NumPy
 - OpenCV
 
-### Frontend
+###  Frontend
 - Next.js
 - React
 - TypeScript
 
-##  Nasıl Çalışır?
-
-1. Kullanıcı web arayüzünden bir görüntü yükler
-2. Görüntü backend'e gönderilir
-3. Backend görüntüyü işler ve segmentasyon uygular
-4. Sonuç kullanıcıya geri gösterilir
+---
 
 ##  Kurulum
 
-### Backend
+###  Backend Kurulumu
 
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
+cd backend  
+pip install -r requirements.txt  
+uvicorn main:app --reload  
+
+Backend çalıştıktan sonra:  
+http://127.0.0.1:8000/docs  
+
+---
+
+###  Frontend Kurulumu
+
+cd frontend  
+npm install  
+npm run dev  
+
+Frontend çalıştıktan sonra:  
+http://localhost:3000  
+
+---
+
+
+
+
+## 👩‍💻 Geliştirici
+
+Bu proje bir bitirme projesi kapsamında geliştirilmektedir.
