@@ -1,11 +1,77 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useEffect, useRef, useState } from "react";
+
+type Language = "tr" | "en";
+type Theme = "light" | "dark";
+
+const content = {
+  tr: {
+    appName: "AI Segmentasyon Sistemi",
+    badge: "Görüntü İşleme • Web Uygulaması",
+    heroTitle:
+      "Görüntü segmentasyonunu sade, hızlı ve modern bir arayüzle deneyimle.",
+    heroText:
+      "Görselini yükle, isteğe bağlı nesne ipucu gir ve FastAPI tabanlı backend ile segmentasyon sonucunu anında görüntüle.",
+    promptLabel: "Nesne İpucu",
+    promptPlaceholder: "Örn: banana, car, person",
+    uploadTitle: "Görsel yükle",
+    uploadText: "Dosya seç veya görseli buraya sürükle",
+    uploadHint: "PNG, JPG veya JPEG desteklenir",
+    selectedFile: "Seçilen dosya",
+    originalImage: "Orijinal Görüntü",
+    resultImage: "Segmentasyon Sonucu",
+    emptyOriginal: "Henüz görsel yüklenmedi",
+    emptyResult: "Sonuç burada görüntülenecek",
+    segment: "Segment Et",
+    processing: "İşleniyor...",
+    reset: "Temizle",
+    download: "Sonucu İndir",
+    errorNoImage: "Lütfen önce bir görsel yükle.",
+    errorBackend: "Backend hata verdi.",
+    errorGeneral: "Bir hata oluştu. Backend çalışıyor mu kontrol et.",
+  },
+  en: {
+    appName: "AI Segmentation System",
+    badge: "Image Processing • Web Application",
+    heroTitle:
+      "Experience image segmentation with a clean, fast and modern interface.",
+    heroText:
+      "Upload an image, optionally enter an object prompt, and instantly view the segmentation result using the FastAPI backend.",
+    promptLabel: "Object Prompt",
+    promptPlaceholder: "Ex: banana, car, person",
+    uploadTitle: "Upload image",
+    uploadText: "Choose a file or drag image here",
+    uploadHint: "PNG, JPG or JPEG supported",
+    selectedFile: "Selected file",
+    originalImage: "Original Image",
+    resultImage: "Segmentation Result",
+    emptyOriginal: "No image uploaded yet",
+    emptyResult: "Result will be displayed here",
+    segment: "Segment",
+    processing: "Processing...",
+    reset: "Clear",
+    download: "Download Result",
+    errorNoImage: "Please upload an image first.",
+    errorBackend: "Backend returned an error.",
+    errorGeneral: "An error occurred. Please check if the backend is running.",
+  },
+};
 
 export default function Home() {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
+  const [language, setLanguage] = useState<Language>("tr");
+  const [theme, setTheme] = useState<Theme>("dark");
+  const [loading, setLoading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [error, setError] = useState("");
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const t = content[language];
+  const isDark = theme === "dark";
 
   useEffect(() => {
     return () => {
@@ -14,19 +80,42 @@ export default function Home() {
     };
   }, [preview, result]);
 
-  const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const setSelectedImage = (file: File) => {
+    if (preview) URL.revokeObjectURL(preview);
+    if (result) URL.revokeObjectURL(result);
 
     setImage(file);
     setPreview(URL.createObjectURL(file));
     setResult(null);
+    setError("");
+  };
+
+  const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedImage(file);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragActive(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    setSelectedImage(file);
   };
 
   const sendToBackend = async () => {
-    if (!image) return;
+    if (!image) {
+      setError(t.errorNoImage);
+      return;
+    }
 
     try {
+      setLoading(true);
+      setError("");
+
       const formData = new FormData();
       formData.append("file", image);
       formData.append("prompt", prompt);
@@ -36,104 +125,372 @@ export default function Home() {
         body: formData,
       });
 
-      if (!res.ok) throw new Error("Backend hata verdi");
+      if (!res.ok) throw new Error(t.errorBackend);
 
       const data = await res.json();
 
+      const hexParts = data.image.match(/.{1,2}/g);
+      if (!hexParts) throw new Error("Image data is invalid.");
+
       const byteArray = new Uint8Array(
-        data.image.match(/.{1,2}/g).map((b: string) => parseInt(b, 16))
+        hexParts.map((b: string) => parseInt(b, 16))
       );
 
       const blob = new Blob([byteArray], { type: "image/png" });
       const url = URL.createObjectURL(blob);
 
+      if (result) URL.revokeObjectURL(result);
       setResult(url);
     } catch (err) {
       console.error(err);
-      alert("Bir hata oluştu 😢");
+      setError(t.errorGeneral);
+    } finally {
+      setLoading(false);
     }
   };
-  //test
+
+  const resetAll = () => {
+    if (preview) URL.revokeObjectURL(preview);
+    if (result) URL.revokeObjectURL(result);
+
+    setImage(null);
+    setPreview(null);
+    setResult(null);
+    setPrompt("");
+    setError("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>🧠 AI Segmentasyon Sistemi</h1>
+    <main
+      className={`relative min-h-screen overflow-x-hidden transition-colors duration-500 ${isDark ? "bg-slate-950 text-white" : "bg-slate-50 text-slate-950"
+        }`}
+    >
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none fixed inset-0 z-0 ${isDark
+            ? "bg-[radial-gradient(circle_at_top_left,#1d4ed850,transparent_35%),radial-gradient(circle_at_top_right,#7c3aed40,transparent_35%)]"
+            : "bg-[radial-gradient(circle_at_top_left,#bfdbfe,transparent_35%),radial-gradient(circle_at_top_right,#ddd6fe,transparent_35%)]"
+          }`}
+      />
 
-        <input
-          type="text"
-          placeholder="Nesne gir (örn: banana)"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          style={styles.input}
-        />
-
-        <input type="file" onChange={handleImage} style={styles.file} />
-
-        {preview && (
+      <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-6 sm:px-8">
+        <nav
+          className={`mb-10 flex flex-col gap-4 rounded-3xl border px-5 py-4 shadow-sm backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between ${isDark
+              ? "border-white/10 bg-white/5"
+              : "border-slate-200 bg-white/70"
+            }`}
+        >
           <div>
-            <h3>Yüklenen Görüntü</h3>
-            <img src={preview} style={styles.image} />
+            <h1 className="text-lg font-semibold tracking-tight">
+              {t.appName}
+            </h1>
+            <p
+              className={
+                isDark ? "text-sm text-slate-400" : "text-sm text-slate-500"
+              }
+            >
+              {t.badge}
+            </p>
           </div>
-        )}
 
-        <button onClick={sendToBackend} style={styles.button}>
-          Segment Et
-        </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setLanguage(language === "tr" ? "en" : "tr")}
+              className={`relative flex h-11 w-24 items-center rounded-full border p-1 transition ${isDark
+                  ? "border-white/10 bg-white/10"
+                  : "border-slate-200 bg-slate-100"
+                }`}
+            >
+              <span
+                className={`absolute left-1 top-1 h-9 w-11 rounded-full bg-blue-600 shadow-md transition-transform duration-300 ${language === "en" ? "translate-x-11" : "translate-x-0"
+                  }`}
+              />
+              <span
+                className={`relative z-10 flex-1 text-center text-sm font-bold transition ${language === "tr"
+                    ? "text-white"
+                    : isDark
+                      ? "text-slate-400"
+                      : "text-slate-500"
+                  }`}
+              >
+                TR
+              </span>
+              <span
+                className={`relative z-10 flex-1 text-center text-sm font-bold transition ${language === "en"
+                    ? "text-white"
+                    : isDark
+                      ? "text-slate-400"
+                      : "text-slate-500"
+                  }`}
+              >
+                EN
+              </span>
+            </button>
 
-        {result && (
+            <button
+              type="button"
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              className={`relative flex h-11 w-36 items-center rounded-full border p-1 transition ${isDark
+                  ? "border-white/10 bg-white/10"
+                  : "border-slate-200 bg-slate-100"
+                }`}
+            >
+              <span
+                className={`absolute left-1 top-1 h-9 w-[66px] rounded-full shadow-md transition-transform duration-300 ${isDark
+                    ? "translate-x-[68px] bg-slate-900"
+                    : "translate-x-0 bg-blue-600"
+                  }`}
+              />
+              <span
+                className={`relative z-10 flex-1 text-center text-xs font-bold transition ${!isDark ? "text-white" : "text-slate-400"
+                  }`}
+              >
+                LIGHT
+              </span>
+              <span
+                className={`relative z-10 flex-1 text-center text-xs font-bold transition ${isDark ? "text-white" : "text-slate-500"
+                  }`}
+              >
+                DARK
+              </span>
+            </button>
+          </div>
+        </nav>
+
+        <div className="grid flex-1 items-center gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <h3>Sonuç</h3>
-            <img src={result} style={styles.image} />
+            <div
+              className={`mb-5 inline-flex rounded-full border px-4 py-2 text-sm ${isDark
+                  ? "border-blue-400/30 bg-blue-400/10 text-blue-200"
+                  : "border-blue-200 bg-blue-50 text-blue-700"
+                }`}
+            >
+              {t.badge}
+            </div>
+
+            <h2 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+              {t.heroTitle}
+            </h2>
+
+            <p
+              className={`mt-6 max-w-xl text-base leading-8 sm:text-lg ${isDark ? "text-slate-300" : "text-slate-600"
+                }`}
+            >
+              {t.heroText}
+            </p>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              {["Next.js", "FastAPI", "OpenCV"].map((item) => (
+                <div
+                  key={item}
+                  className={`rounded-2xl border p-4 text-center text-sm font-semibold shadow-sm ${isDark
+                      ? "border-white/10 bg-white/5"
+                      : "border-slate-200 bg-white"
+                    }`}
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div
+            className={`rounded-[2rem] border p-5 shadow-2xl backdrop-blur-xl sm:p-6 ${isDark
+                ? "border-white/10 bg-white/10 shadow-black/30"
+                : "border-slate-200 bg-white/80 shadow-slate-200"
+              }`}
+          >
+            <div className="mb-5">
+              <label className="mb-2 block text-sm font-semibold">
+                {t.promptLabel}
+              </label>
+              <input
+                type="text"
+                placeholder={t.promptPlaceholder}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className={`w-full rounded-2xl border px-4 py-3 outline-none transition focus:ring-4 ${isDark
+                    ? "border-white/10 bg-slate-950/60 text-white placeholder:text-slate-500 focus:border-blue-400 focus:ring-blue-500/20"
+                    : "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-200"
+                  }`}
+              />
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg"
+              onChange={handleImage}
+              className="hidden"
+            />
+
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  fileInputRef.current?.click();
+                }
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragActive(true);
+              }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={handleDrop}
+              className={`cursor-pointer rounded-3xl border-2 border-dashed p-6 text-center transition ${dragActive
+                  ? "border-blue-400 bg-blue-500/10"
+                  : isDark
+                    ? "border-white/15 bg-slate-950/40 hover:border-blue-400/70"
+                    : "border-slate-300 bg-slate-50 hover:border-blue-500"
+                }`}
+            >
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500 text-2xl text-white">
+                ↑
+              </div>
+              <h3 className="text-lg font-semibold">{t.uploadTitle}</h3>
+              <p
+                className={
+                  isDark
+                    ? "mt-1 text-sm text-slate-400"
+                    : "mt-1 text-sm text-slate-500"
+                }
+              >
+                {t.uploadText}
+              </p>
+              <p
+                className={
+                  isDark
+                    ? "mt-2 text-xs text-slate-500"
+                    : "mt-2 text-xs text-slate-400"
+                }
+              >
+                {t.uploadHint}
+              </p>
+            </div>
+
+            {image && (
+              <p
+                className={
+                  isDark
+                    ? "mt-3 text-sm text-slate-400"
+                    : "mt-3 text-sm text-slate-500"
+                }
+              >
+                {t.selectedFile}:{" "}
+                <span className="font-medium">{image.name}</span>
+              </p>
+            )}
+
+            {error && (
+              <div className="mt-4 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                {error}
+              </div>
+            )}
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <ImagePanel
+                title={t.originalImage}
+                imageUrl={preview}
+                emptyText={t.emptyOriginal}
+                isDark={isDark}
+              />
+              <ImagePanel
+                title={t.resultImage}
+                imageUrl={result}
+                emptyText={t.emptyResult}
+                isDark={isDark}
+              />
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={sendToBackend}
+                disabled={!image || loading}
+                className="flex-1 rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? t.processing : t.segment}
+              </button>
+
+              <button
+                type="button"
+                onClick={resetAll}
+                className={`rounded-2xl px-5 py-3 font-semibold transition ${isDark
+                    ? "bg-white/10 text-white hover:bg-white/20"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+              >
+                {t.reset}
+              </button>
+
+              {result && (
+                <a
+                  href={result}
+                  download="segmentation-result.png"
+                  className={`rounded-2xl px-5 py-3 text-center font-semibold transition ${isDark
+                      ? "bg-emerald-500 text-white hover:bg-emerald-400"
+                      : "bg-emerald-600 text-white hover:bg-emerald-500"
+                    }`}
+                >
+                  {t.download}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function ImagePanel({
+  title,
+  imageUrl,
+  emptyText,
+  isDark,
+}: {
+  title: string;
+  imageUrl: string | null;
+  emptyText: string;
+  isDark: boolean;
+}) {
+  return (
+    <div
+      className={`overflow-hidden rounded-3xl border ${isDark
+          ? "border-white/10 bg-slate-950/50"
+          : "border-slate-200 bg-white"
+        }`}
+    >
+      <div
+        className={`border-b px-4 py-3 text-sm font-semibold ${isDark ? "border-white/10" : "border-slate-200"
+          }`}
+      >
+        {title}
+      </div>
+
+      <div className="flex aspect-square items-center justify-center p-3">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={title}
+            className="h-full w-full rounded-2xl object-contain"
+          />
+        ) : (
+          <div
+            className={`flex h-full w-full items-center justify-center rounded-2xl text-center text-sm ${isDark ? "bg-white/5 text-slate-500" : "bg-slate-50 text-slate-400"
+              }`}
+          >
+            {emptyText}
           </div>
         )}
       </div>
     </div>
   );
 }
-
-/* 🔥 BURASI DIŞARIDA OLACAK */
-const styles = {
-  container: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#0f172a",
-  },
-  card: {
-    background: "#1e293b",
-    padding: "30px",
-    borderRadius: "16px",
-    textAlign: "center" as const,
-    width: "400px",
-    color: "white",
-    boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-  },
-  title: {
-    marginBottom: "20px",
-  },
-  input: {
-    width: "100%",
-    padding: "10px",
-    marginBottom: "10px",
-    borderRadius: "8px",
-    border: "none",
-  },
-  file: {
-    marginBottom: "10px",
-  },
-  button: {
-    marginTop: "10px",
-    padding: "10px 20px",
-    background: "#3b82f6",
-    border: "none",
-    borderRadius: "8px",
-    color: "white",
-    cursor: "pointer",
-  },
-  image: {
-    marginTop: "10px",
-    width: "100%",
-    borderRadius: "10px",
-  },
-};
