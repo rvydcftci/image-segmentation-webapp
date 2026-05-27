@@ -104,25 +104,3 @@ http://localhost:3000
 
 ---
 
-# AI Segmentasyon
-
-Projede Meta AI tarafından geliştirilen Segment Anything yaklaşımından esinlenen MobileSAM modeli kullanılmaktadır.
-
-AI segmentasyon özelliği sayesinde görüntü içerisindeki nesneler daha gelişmiş şekilde ayrıştırılabilmektedir.
-
----
-
-# 📷Uygulama Görselleri
-
-> Buraya ekran görüntül
-
-# 👨‍💻 Geliştiriciler
-
-- Rüveyda Çiftci
-- ...
-
----
-
-# 📄 Lisans
-
-Bu proje eğitim amaçlı geliştirilmiştir.
