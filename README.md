@@ -2,7 +2,7 @@
 
 Modern ve etkileşimli bir görüntü segmentasyonu web uygulaması.
 
-Bu proje; kullanıcıların yüklediği görseller üzerinde farklı segmentasyon teknikleri uygulayarak maske (mask) ve overlay sonuçları üretmesini sağlar.
+Bu proje; kullanıcıların yüklediği görseller üzerinde farklı segmentasyon teknikleri uygulayarak mask ve overlay sonuçları üretmesini sağlar.
 
 ---
 
