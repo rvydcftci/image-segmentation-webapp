@@ -1,4 +1,4 @@
-# 🧠 AI Image Segmentation Web Application
+# AI Image Segmentation Web Application
 
 Modern ve etkileşimli bir görüntü segmentasyonu web uygulaması.
 
