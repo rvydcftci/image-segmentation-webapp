@@ -19,7 +19,7 @@ Bu proje; kullanıcıların yüklediği görseller üzerinde farklı segmentasyo
 
 ---
 
-# 🛠️ Kullanılan Teknolojiler
+# Kullanılan Teknolojiler
 
 ## Backend
 - Python
@@ -37,7 +37,7 @@ Bu proje; kullanıcıların yüklediği görseller üzerinde farklı segmentasyo
 
 ---
 
-# 🧠 Desteklenen Segmentasyon Yöntemleri
+# Desteklenen Segmentasyon Yöntemleri
 
 | Yöntem | Açıklama |
 |---|---|
@@ -50,9 +50,9 @@ Bu proje; kullanıcıların yüklediği görseller üzerinde farklı segmentasyo
 
 ---
 
-# 📦 Kurulum
+# Kurulum
 
-## 1️⃣ Repository Klonlama
+## Repository Klonlama
 
 ```bash
 git clone <repo-link>
@@ -61,7 +61,7 @@ cd segmentasyon-proje
 
 ---
 
-# ⚙️ Backend Kurulumu
+# Backend Kurulumu
 
 ```bash
 cd backend
@@ -87,7 +87,7 @@ http://127.0.0.1:8000/docs
 
 ---
 
-# 💻 Frontend Kurulumu
+# Frontend Kurulumu
 
 ```bash
 cd frontend
@@ -104,7 +104,7 @@ http://localhost:3000
 
 ---
 
-# 🧠 AI Segmentasyon
+# AI Segmentasyon
 
 Projede Meta AI tarafından geliştirilen Segment Anything yaklaşımından esinlenen MobileSAM modeli kullanılmaktadır.
 
@@ -112,11 +112,9 @@ AI segmentasyon özelliği sayesinde görüntü içerisindeki nesneler daha geli
 
 ---
 
-# 📷 Uygulama Görselleri
+# 📷Uygulama Görselleri
 
-> Buraya ekran görüntüleri eklenebilir.
-
----
+> Buraya ekran görüntül
 
 # 👨‍💻 Geliştiriciler
 
