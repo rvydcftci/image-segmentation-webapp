@@ -6,7 +6,7 @@ Bu proje; kullanıcıların yüklediği görseller üzerinde farklı segmentasyo
 
 ---
 
-# 🚀 Özellikler
+# Özellikler
 
 - 🎯 Çoklu segmentasyon yöntemi
 - 🧠 AI destekli MobileSAM segmentasyonu
